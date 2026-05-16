@@ -19,7 +19,7 @@ I have a proven track record managing multi-site research trials, analyzing admi
 
 ## Education
 
-- **Ph.D. Candidate** — University of Toronto, Institute of Health Policy, Management, and Evaluation (2020–present)  
+- **Ph.D.** — University of Toronto, Institute of Health Policy, Management, and Evaluation (2020)  
   *Specialization: Outcomes and Evaluation + Knowledge Translation*
 - **Master of Health Science (MHSc)** — Ontario Tech University (2018)
 - **Bachelor of Science (BSc) Honours** — University of Toronto (2015)  

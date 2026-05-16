@@ -13,7 +13,7 @@ You can download my full CV here: [Download CV (PDF)](/files/Tahsin_Farah_CV.pdf
 
 ## Education
 
-* **Ph.D. Candidate**, University of Toronto — Institute of Health Policy, Management, and Evaluation (2020–present)
+* **Ph.D.**, University of Toronto — Institute of Health Policy, Management, and Evaluation (2020)
 * **Master of Health Science (MHSc)**, Ontario Tech University (2018)
 * **Bachelor of Science (BSc) Honours**, University of Toronto — Global Health and Psychology (2015)
 
