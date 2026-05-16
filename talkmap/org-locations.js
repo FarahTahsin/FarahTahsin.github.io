@@ -1,22 +1,32 @@
 var addressPoints = [
   [
-    "Talk 2 on Relevant Topic in Your Field<br />London School of Testing; London, UK",
-    51.4893335,
-    -0.14405508452768728
+    "Examining usage behavior of a goal-supporting mHealth app in primary care among patients with multiple chronic conditions<br />North American Primary Care Research Group (NAPCRG); California (Virtual)",
+    37.2418572,
+    -121.7874949
   ],
   [
-    "Tutorial 1 on Relevant Topic in Your Field<br />UC-Berkeley Institute for Testing Science; Berkeley, CA, USA",
-    37.8708393,
-    -122.272863
+    "Understanding Patient Attrition: Exploring mobile technology usage patterns for patients with complex chronic conditions<br />International Conference for Integrated Care (ICIC20); Zagreb, Croatia",
+    45.8130967,
+    15.9772795
   ],
   [
-    "Conference Proceeding talk 3 on Relevant Topic in Your Field<br />Testing Institute of America 2014 Annual Conference; Los Angeles, CA, USA",
-    34.0536909,
-    -118.242766
+    "The relationship between Telehealth and treatment burden<br />IHPME Research & Impact Day; Toronto, ON",
+    43.6534817,
+    -79.3839347
   ],
   [
-    "Talk 1 on Relevant Topic in Your Field<br />UC San Francisco, Department of Testing; San Francisco, CA, USA",
-    37.7792588,
-    -122.4193286
+    "Information and Communication Technologies (ICTs) Enabling Integrated Primary Care for Complex Patients: A scoping review<br />International Conference for Integrated Care (ICIC21); Virtual",
+    44.4939936,
+    11.3576917
+  ],
+  [
+    "Understanding Patient Attrition: Exploring mobile technology usage patterns for patients with complex chronic conditions<br />North American Primary Care Research Group (NAPCRG); Toronto, Ontario",
+    43.6534817,
+    -79.3839347
+  ],
+  [
+    "Measuring treatment attrition at various stages of engagement in Opioid Agonist Treatment in Ontario Canada using a cascade of care framework<br />International Society of Addiction Medicine (ISAM); Virtual",
+    44.4939936,
+    11.3576917
   ]
 ];
