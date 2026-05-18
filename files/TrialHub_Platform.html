@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrialHub — Equitable Trial Participation Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--dark:#0B1A2E;--dark2:#132238;--pri:#0891B2;--pri-light:#ECFEFF;--sec:#06B6D4;
+--acc:#10B981;--acc-light:#D1FAE5;--warn:#F59E0B;--warn-light:#FEF3C7;
+--danger:#EF4444;--danger-light:#FEE2E2;--purple:#8B5CF6;--purple-light:#EDE9FE;
+--bg:#F8FAFC;--card:#FFFFFF;--border:#E2E8F0;--text:#0F172A;--muted:#64748B;
+--radius:12px;--shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+--shadow-md:0 4px 6px rgba(0,0,0,0.05),0 2px 4px rgba(0,0,0,0.03);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:14px}
+.app{display:flex;min-height:100vh}
+/* Sidebar */
+.sidebar{width:260px;background:var(--dark);color:#fff;position:fixed;height:100vh;overflow-y:auto;z-index:10;display:flex;flex-direction:column}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px}
+.sb-header{padding:24px 22px 20px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sb-header h1{font-size:22px;font-weight:800;background:linear-gradient(135deg,#06B6D4,#10B981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px}
+.sb-header p{font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px}
+.nav-group{padding:14px 0 2px}
+.nav-group-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.25);padding:0 22px;margin-bottom:4px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:12px;padding:9px 22px;cursor:pointer;transition:all 0.15s;font-size:13.5px;color:rgba(255,255,255,0.6);border-left:3px solid transparent;font-weight:450}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.9)}
+.nav-item.active{background:rgba(8,145,178,0.12);color:#67E8F9;border-left-color:#06B6D4;font-weight:500}
+.nav-icon{width:20px;text-align:center;font-size:15px;opacity:0.85}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600}
+.sb-footer{margin-top:auto;padding:14px 22px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:rgba(255,255,255,0.25)}
+#sidebar-nav{flex:1}
+/* Main */
+.main{margin-left:260px;flex:1;min-height:100vh}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+.topbar h2{font-size:17px;font-weight:650;color:var(--dark)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.role-switch{display:flex;background:var(--bg);border-radius:8px;padding:3px;border:1px solid var(--border)}
+.role-btn{padding:6px 14px;border:none;background:transparent;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500;color:var(--muted);transition:all 0.15s}
+.role-btn.active{background:#fff;color:var(--pri);box-shadow:var(--shadow)}
+.notif-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;font-size:16px}
+.notif-btn .dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid #fff}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 14px 5px 5px;background:var(--bg);border-radius:20px;border:1px solid var(--border)}
+.user-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.user-name{font-size:13px;font-weight:500}
+.user-role{font-size:10px;color:var(--muted)}
+.content{padding:28px 32px;max-width:1440px}
+.page{display:none}.page.active{display:block}
+.page-header{margin-bottom:24px}.page-header h3{font-size:20px;font-weight:700;color:var(--dark);margin-bottom:4px}.page-header p{font-size:13px;color:var(--muted)}
+/* Components */
+.grid{display:grid;gap:20px}.grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr 1fr 1fr}.grid-4{grid-template-columns:repeat(4,1fr)}.grid-5{grid-template-columns:repeat(5,1fr)}.grid-6{grid-template-columns:repeat(6,1fr)}
+.card{background:var(--card);border-radius:var(--radius);padding:22px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;color:var(--dark)}.card-subtitle{font-size:12px;color:var(--muted)}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:18px 20px;border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.stat-card .accent{position:absolute;top:0;left:0;width:4px;height:100%;border-radius:2px}
+.stat-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:0.4px}
+.stat-value{font-size:26px;font-weight:750;color:var(--dark);margin:4px 0 2px;letter-spacing:-0.5px}
+.stat-change{font-size:12px;display:flex;align-items:center;gap:4px}
+.stat-change.up{color:var(--acc)}.stat-change.down{color:var(--danger)}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;gap:4px}
+.badge-success{background:var(--acc-light);color:#065F46}.badge-warning{background:var(--warn-light);color:#92400E}
+.badge-danger{background:var(--danger-light);color:#991B1B}.badge-info{background:var(--pri-light);color:#0E7490}
+.badge-purple{background:var(--purple-light);color:#5B21B6}.badge-neutral{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.btn{padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--pri);color:#fff}.btn-primary:hover{background:#0E7490}
+.btn-success{background:var(--acc);color:#fff}.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{border-color:var(--pri);color:var(--pri)}
+.btn-sm{padding:5px 12px;font-size:12px}.btn-ghost{background:transparent;color:var(--pri);padding:4px 8px}
+.btn-lg{padding:12px 24px;font-size:15px;border-radius:10px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600}
+td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px}
+tr:hover td{background:var(--bg)}
+.progress{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.6s ease}
+.chart-box{position:relative;height:260px}
+.alert{padding:14px 18px;border-radius:10px;font-size:13px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;border:1px solid}
+.alert-info{background:var(--pri-light);color:#0E7490;border-color:rgba(8,145,178,0.12)}
+.alert-warn{background:var(--warn-light);color:#92400E;border-color:rgba(245,158,11,0.15)}
+.alert-danger{background:var(--danger-light);color:#991B1B;border-color:rgba(239,68,68,0.12)}
+.alert-success{background:var(--acc-light);color:#065F46;border-color:rgba(16,185,129,0.12)}
+.alert-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+/* Pipeline */
+.pipeline{display:flex;flex-direction:column;gap:6px}
+.pipeline-stage{display:flex;align-items:center;gap:12px}
+.pipeline-label{font-size:13px;font-weight:500;min-width:120px}
+.pipeline-bar{height:28px;border-radius:6px;display:flex;align-items:center;padding:0 12px;font-size:12px;font-weight:600;color:#fff;min-width:36px}
+.pipeline-rate{font-size:11px;color:var(--muted);margin-left:8px}
+/* Journey */
+.journey{display:flex;align-items:flex-start;padding:20px 0}
+.journey-step{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+.journey-step::before{content:'';position:absolute;top:20px;left:-50%;right:50%;height:3px;background:var(--border)}
+.journey-step:first-child::before{display:none}
+.journey-step.done::before{background:var(--acc)}.journey-step.current::before{background:linear-gradient(90deg,var(--acc),var(--border))}
+.journey-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;border:3px solid var(--border);background:#fff;position:relative;z-index:1;margin-bottom:10px}
+.journey-step.done .journey-dot{background:var(--acc);border-color:var(--acc);color:#fff}
+.journey-step.current .journey-dot{border-color:var(--pri);color:var(--pri);box-shadow:0 0 0 4px rgba(8,145,178,0.15)}
+.journey-step-label{font-size:12px;font-weight:500}.journey-step-sub{font-size:11px;color:var(--muted);margin-top:2px}
+/* Rec cards */
+.rec-card{border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;transition:border-color 0.15s}
+.rec-card:hover{border-color:var(--pri)}
+.rec-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.rec-content{flex:1}.rec-title{font-size:13px;font-weight:600;margin-bottom:2px}.rec-desc{font-size:12px;color:var(--muted)}
+/* Timeline */
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:16px}
+.tl-dot{position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;border:2px solid var(--pri);background:#fff}
+.tl-item.done .tl-dot{background:var(--pri)}
+.tl-time{font-size:11px;color:var(--muted)}.tl-text{font-size:13px;margin-top:1px}
+/* Gauge */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:16px}
+.gauge{width:160px;height:80px;position:relative;overflow:hidden}
+.gauge-bg{width:160px;height:80px;border-radius:80px 80px 0 0;background:conic-gradient(from 180deg,var(--acc) 0deg,var(--warn) 120deg,var(--danger) 180deg);position:absolute}
+.gauge-mask{width:120px;height:60px;border-radius:60px 60px 0 0;background:var(--card);position:absolute;bottom:0;left:50%;transform:translateX(-50%)}
+.gauge-needle{position:absolute;bottom:0;left:50%;width:3px;height:62px;background:var(--dark);border-radius:2px;transform-origin:bottom center;transition:transform 0.8s ease}
+.gauge-value{font-size:28px;font-weight:800;text-align:center;margin-top:6px}
+.gauge-label{font-size:12px;color:var(--muted);text-align:center}
+/* Heatmap */
+.heatmap-cell{border-radius:3px;cursor:pointer;transition:transform 0.1s}.heatmap-cell:hover{transform:scale(1.15);z-index:1}
+.heat-0{background:#F1F5F9}.heat-1{background:#CCFBF1}.heat-2{background:#99F6E4}.heat-3{background:#FDE68A}.heat-4{background:#FBBF24}.heat-5{background:#F87171}
+/* Kanban */
+.kanban{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.kanban-col{background:var(--bg);border-radius:10px;padding:14px}
+.kanban-col-header{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.kanban-col-header .count{background:var(--border);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--muted)}
+.kanban-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:box-shadow 0.15s}
+.kanban-card:hover{box-shadow:var(--shadow-md)}
+.kanban-card-title{font-size:13px;font-weight:500;margin-bottom:6px}
+.kanban-card-meta{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+/* Equity */
+.equity-score{display:flex;align-items:center;gap:20px;padding:20px;background:linear-gradient(135deg,var(--purple-light),#fff);border-radius:12px;border:1px solid rgba(139,92,246,0.15)}
+.equity-ring{width:80px;height:80px;border-radius:50%;background:conic-gradient(var(--purple) 0deg,var(--purple) 252deg,var(--border) 252deg);display:flex;align-items:center;justify-content:center}
+.equity-ring-inner{width:60px;height:60px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--purple)}
+/* Messaging */
+.msg-thread{display:flex;flex-direction:column;gap:12px;max-height:420px;overflow-y:auto;padding-right:8px}
+.msg{max-width:75%;padding:12px 16px;border-radius:14px;font-size:13px;line-height:1.6}
+.msg-in{background:var(--bg);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+.msg-out{background:var(--pri);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg-meta{font-size:10px;margin-top:4px;opacity:0.6}
+.msg-input-row{display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.msg-input-row input{flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit}
+.msg-input-row input:focus{outline:none;border-color:var(--pri)}
+/* Study card */
+.study-card{border:1px solid var(--border);border-radius:12px;padding:20px;transition:all 0.2s;cursor:pointer}
+.study-card:hover{border-color:var(--pri);box-shadow:var(--shadow-md)}
+.burden-dots{display:flex;gap:3px}
+.burden-dots span{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.burden-dots span.filled{background:var(--warn)}.burden-dots span.filled.low{background:var(--acc)}.burden-dots span.filled.high{background:var(--danger)}
+/* Patient welcome */
+.welcome-banner{background:linear-gradient(135deg,#0B1A2E 0%,#0E7490 100%);border-radius:16px;padding:32px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden}
+.welcome-banner::after{content:'';position:absolute;top:-30px;right:-30px;width:200px;height:200px;background:rgba(255,255,255,0.04);border-radius:50%}
+.welcome-banner h3{font-size:22px;font-weight:700;margin-bottom:6px}.welcome-banner p{font-size:14px;opacity:0.8}
+/* Survey item */
+.survey-item{border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;transition:border-color 0.15s}
+.survey-item:hover{border-color:var(--pri)}
+.survey-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.survey-info{flex:1}.survey-name{font-weight:600;font-size:14px}.survey-meta{font-size:12px;color:var(--muted);margin-top:2px}
+/* Feedback card */
+.feedback-card{background:linear-gradient(135deg,var(--pri-light) 0%,#fff 100%);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+/* Visit item */
+.visit-item{display:flex;align-items:center;gap:14px;padding:14px;background:var(--bg);border-radius:10px;margin-bottom:10px}
+.visit-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.visit-info{flex:1}.visit-title{font-weight:600;font-size:13px}.visit-sub{font-size:12px;color:var(--muted);margin-top:2px}
+/* Toast & Modal */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:14px 22px;border-radius:10px;font-size:13px;z-index:200;display:none;align-items:center;gap:8px;box-shadow:0 10px 25px rgba(0,0,0,0.2)}.toast.show{display:flex}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(11,26,46,0.5);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(2px)}.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto}
+.modal h3{font-size:18px;font-weight:700;margin-bottom:4px}.modal .subtitle{font-size:13px;color:var(--muted);margin-bottom:20px}
+/* Responsive */
+@media(max-width:1100px){.grid-4,.grid-5,.grid-6{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.sidebar{width:64px}.sb-header h1,.sb-header p,.nav-group-label,.nav-item span:not(.nav-icon),.nav-badge,.sb-footer{display:none}.main{margin-left:64px}.grid-2,.grid-3{grid-template-columns:1fr}.content{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<div class="sb-header"><h1>TrialHub</h1><p>Equitable Participation Platform</p></div>
+<div id="sidebar-nav"></div>
+<div class="sb-footer">v2.0 Research Prototype<br>© 2026 TrialHub</div>
+</aside>
+<div class="main">
+<div class="topbar">
+<h2 id="page-title">Dashboard</h2>
+<div class="topbar-right">
+<div class="role-switch">
+<button class="role-btn" data-role="coordinator" onclick="switchRole('coordinator')">Coordinator</button>
+<button class="role-btn" data-role="investigator" onclick="switchRole('investigator')">Investigator</button>
+<button class="role-btn" data-role="participant" onclick="switchRole('participant')">Participant</button>
+</div>
+<button class="notif-btn" onclick="showToast('3 new notifications')">&#128276;<span class="dot"></span></button>
+<div class="user-pill"><div class="user-avatar" id="user-avatar">SM</div><div><div class="user-name" id="user-name">Sarah Mitchell</div><div class="user-role" id="user-role">Trial Coordinator</div></div></div>
+</div>
+</div>
+<div class="content">
+
+<!-- ============================== -->
+<!-- COORDINATOR PAGES              -->
+<!-- ============================== -->
+
+<!-- C: Dashboard -->
+<div id="page-c-dashboard" class="page">
+<div class="grid grid-6" style="margin-bottom:22px">
+<div class="stat-card"><div class="accent" style="background:var(--pri)"></div><div class="stat-label">Enrolled</div><div class="stat-value">247</div><div class="stat-change up">&#9650; 18 this month</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--acc)"></div><div class="stat-label">Consented</div><div class="stat-value">312</div><div class="stat-change up">92% consent rate</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--sec)"></div><div class="stat-label">Retention</div><div class="stat-value">89%</div><div class="stat-change down">&#9660; 2% from last mo</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--warn)"></div><div class="stat-label">Burden Alerts</div><div class="stat-value">14</div><div class="stat-change down">5 new this week</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--purple)"></div><div class="stat-label">Active Sites</div><div class="stat-value">18</div><div class="stat-change up">&#9650; 3 onboarded</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--acc)"></div><div class="stat-label">Equity Score</div><div class="stat-value">72%</div><div class="stat-change up">&#9650; 4% improvement</div></div>
+</div>
+<div class="grid grid-2">
+<div class="card"><div class="card-header"><span class="card-title">Recruitment Funnel</span><span class="badge badge-info">All sites</span></div><div class="chart-box" style="height:220px"><canvas id="ch-funnel"></canvas></div></div>
+<div class="card"><div class="card-header"><span class="card-title">Retention Trend</span><span class="badge badge-neutral">12 months</span></div><div class="chart-box" style="height:220px"><canvas id="ch-retention"></canvas></div></div>
+</div>
+<div class="grid grid-2" style="margin-top:20px">
+<div class="card">
+<div class="card-header"><span class="card-title">At-Risk Participants</span><button class="btn btn-outline btn-sm">View all</button></div>
+<table><thead><tr><th>Patient</th><th>Site</th><th>Burden</th><th>Risk</th><th></th></tr></thead>
+<tbody>
+<tr><td><strong>P-0089</strong></td><td>Site 3</td><td><span style="color:var(--danger);font-weight:600">78/100</span></td><td><span class="badge badge-danger">High</span></td><td><button class="btn btn-ghost btn-sm" onclick="switchRole('coordinator');navigateTo('c-burden')">Intervene</button></td></tr>
+<tr><td><strong>P-0156</strong></td><td>Site 7</td><td><span style="color:var(--warn);font-weight:600">62/100</span></td><td><span class="badge badge-warning">Medium</span></td><td><button class="btn btn-ghost btn-sm">Review</button></td></tr>
+<tr><td><strong>P-0201</strong></td><td>Site 1</td><td><span style="color:var(--warn);font-weight:600">58/100</span></td><td><span class="badge badge-warning">Medium</span></td><td><button class="btn btn-ghost btn-sm">Review</button></td></tr>
+<tr><td><strong>P-0044</strong></td><td>Site 12</td><td><span style="color:var(--warn);font-weight:600">55/100</span></td><td><span class="badge badge-warning">Medium</span></td><td><button class="btn btn-ghost btn-sm">Monitor</button></td></tr>
+</tbody></table>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">Recent Activity</span></div>
+<div class="timeline">
+<div class="tl-item done"><div class="tl-dot"></div><div class="tl-time">Today, 09:42</div><div class="tl-text">Burden alert: P-0089 — 3 missed visits</div></div>
+<div class="tl-item done"><div class="tl-dot"></div><div class="tl-time">Today, 08:15</div><div class="tl-text">14 new survey responses from Sites 3, 7, 12</div></div>
+<div class="tl-item done"><div class="tl-dot"></div><div class="tl-time">Yesterday</div><div class="tl-text">Equity score improved — rural recruitment +12%</div></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-time">2 days ago</div><div class="tl-text">Adaptive scheduling activated for 6 participants</div></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-time">3 days ago</div><div class="tl-text">New site onboarded: Galway West Primary Care</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- C: Participants -->
+<div id="page-c-participants" class="page">
+<div class="page-header"><h3>Participant Management</h3><p>View, filter, and manage all enrolled participants across sites</p></div>
+<div class="grid grid-4" style="margin-bottom:20px">
+<div class="stat-card"><div class="accent" style="background:var(--acc)"></div><div class="stat-label">Active</div><div class="stat-value">218</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--warn)"></div><div class="stat-label">Overdue Tasks</div><div class="stat-value">23</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--danger)"></div><div class="stat-label">High Burden</div><div class="stat-value">14</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--muted)"></div><div class="stat-label">Withdrawn</div><div class="stat-value">15</div></div>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">All Participants</span><div style="display:flex;gap:8px"><input type="text" placeholder="Search by ID or site..." style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;width:200px"><button class="btn btn-outline btn-sm">Filter</button></div></div>
+<table><thead><tr><th>ID</th><th>Site</th><th>Arm</th><th>Enrolled</th><th>Burden</th><th>Surveys</th><th>Last Active</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><strong>P-0012</strong></td><td>Site 3</td><td><span class="badge badge-info">Intervention</span></td><td>12 Jan</td><td><span style="color:var(--acc)">22</span></td><td>3/3</td><td>Today</td><td><span class="badge badge-success">Active</span></td></tr>
+<tr><td><strong>P-0037</strong></td><td>Site 7</td><td><span class="badge badge-neutral">Control</span></td><td>18 Jan</td><td><span style="color:var(--acc)">28</span></td><td>2/3</td><td>Today</td><td><span class="badge badge-success">Active</span></td></tr>
+<tr><td><strong>P-0042</strong></td><td>Site 2</td><td><span class="badge badge-info">Intervention</span></td><td>22 Jan</td><td><span style="color:var(--acc)">31</span></td><td>2/3</td><td>Yesterday</td><td><span class="badge badge-success">Active</span></td></tr>
+<tr><td><strong>P-0056</strong></td><td>Site 5</td><td><span class="badge badge-neutral">Control</span></td><td>1 Feb</td><td><span style="color:var(--warn)">52</span></td><td>1/3</td><td>5 days ago</td><td><span class="badge badge-warning">Overdue</span></td></tr>
+<tr><td><strong>P-0089</strong></td><td>Site 3</td><td><span class="badge badge-info">Intervention</span></td><td>15 Feb</td><td><span style="color:var(--danger)">78</span></td><td>1/2</td><td>2 wks ago</td><td><span class="badge badge-danger">High Burden</span></td></tr>
+<tr><td><strong>P-0103</strong></td><td>Site 9</td><td><span class="badge badge-neutral">Control</span></td><td>28 Feb</td><td><span style="color:var(--acc)">18</span></td><td>1/1</td><td>3 days ago</td><td><span class="badge badge-success">Active</span></td></tr>
+<tr><td><strong>P-0156</strong></td><td>Site 7</td><td><span class="badge badge-info">Intervention</span></td><td>12 Mar</td><td><span style="color:var(--warn)">62</span></td><td>1/2</td><td>1 week ago</td><td><span class="badge badge-warning">At Risk</span></td></tr>
+<tr><td><strong>P-0201</strong></td><td>Site 1</td><td><span class="badge badge-neutral">Control</span></td><td>20 Mar</td><td><span style="color:var(--warn)">58</span></td><td>0/1</td><td>10 days ago</td><td><span class="badge badge-warning">At Risk</span></td></tr>
+</tbody></table>
+</div>
+</div>
+
+<!-- C: Burden Engine -->
+<div id="page-c-burden" class="page">
+<div class="page-header"><h3>Burden-Aware Engine</h3><p>Monitor, predict, and reduce participation burden to sustain engagement</p></div>
+<div class="alert alert-warn"><span class="alert-icon">&#9888;</span><div><strong>3 participants</strong> crossed the high-burden threshold this week. Adaptive recommendations generated. <a href="#" style="color:inherit;font-weight:600">Review now →</a></div></div>
+<div class="grid grid-3" style="margin-bottom:20px">
+<div class="stat-card"><div class="accent" style="background:var(--acc)"></div><div class="stat-label">Low Burden</div><div class="stat-value" style="color:var(--acc)">189</div><div class="stat-change">76% of cohort</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--warn)"></div><div class="stat-label">Moderate Burden</div><div class="stat-value" style="color:var(--warn)">44</div><div class="stat-change">18% of cohort</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--danger)"></div><div class="stat-label">High Burden</div><div class="stat-value" style="color:var(--danger)">14</div><div class="stat-change down">6% — action needed</div></div>
+</div>
+<div class="grid grid-2">
+<div class="card">
+<div class="card-header"><span class="card-title">P-0089 — Burden Detail</span><span class="badge badge-danger">Score: 78</span></div>
+<div class="gauge-wrap"><div class="gauge"><div class="gauge-bg"></div><div class="gauge-mask"></div><div class="gauge-needle" style="transform:rotate(50deg)"></div></div><div class="gauge-value" style="color:var(--danger)">78<span style="font-size:16px;color:var(--muted)">/100</span></div><div class="gauge-label">Participation Burden Score</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+<div style="padding:10px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:11px;color:var(--muted)">Clinic Visits</div><div style="font-size:18px;font-weight:700;color:var(--danger)">5</div><div style="font-size:10px;color:var(--muted)">in 4 weeks</div></div>
+<div style="padding:10px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:11px;color:var(--muted)">Missed Surveys</div><div style="font-size:18px;font-weight:700;color:var(--warn)">3</div><div style="font-size:10px;color:var(--muted)">of 8 due</div></div>
+<div style="padding:10px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:11px;color:var(--muted)">Travel Time</div><div style="font-size:18px;font-weight:700;color:var(--warn)">45 min</div><div style="font-size:10px;color:var(--muted)">each way</div></div>
+<div style="padding:10px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:11px;color:var(--muted)">Survey Fatigue</div><div style="font-size:18px;font-weight:700;color:var(--danger)">High</div><div style="font-size:10px;color:var(--muted)">declining rate</div></div>
+</div>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">Adaptive Recommendations</span></div>
+<div class="rec-card"><div class="rec-icon" style="background:var(--pri-light);color:var(--pri)">&#128247;</div><div class="rec-content"><div class="rec-title">Switch to telehealth visits</div><div class="rec-desc">Convert 2 of 3 upcoming clinic visits to video. Reduces travel burden by 67%.</div></div><button class="btn btn-primary btn-sm">Apply</button></div>
+<div class="rec-card"><div class="rec-icon" style="background:var(--acc-light);color:var(--acc)">&#128221;</div><div class="rec-content"><div class="rec-title">Reduce survey frequency</div><div class="rec-desc">Move from weekly to bi-weekly ePROs. Survey fatigue pattern detected.</div></div><button class="btn btn-primary btn-sm">Apply</button></div>
+<div class="rec-card"><div class="rec-icon" style="background:var(--warn-light);color:var(--warn)">&#128197;</div><div class="rec-content"><div class="rec-title">Consolidate appointments</div><div class="rec-desc">Combine blood draw + follow-up on same day. Saves 1 trip.</div></div><button class="btn btn-primary btn-sm">Apply</button></div>
+<div class="rec-card"><div class="rec-icon" style="background:var(--purple-light);color:var(--purple)">&#128172;</div><div class="rec-content"><div class="rec-title">Switch to async check-in</div><div class="rec-desc">Replace phone call with secure message. Patient responds at convenience.</div></div><button class="btn btn-outline btn-sm">Consider</button></div>
+</div>
+</div>
+<div class="card" style="margin-top:20px">
+<div class="card-header"><span class="card-title">Burden Heatmap — Last 8 Weeks</span><span class="card-subtitle">Brighter = higher daily burden</span></div>
+<div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:3px;padding-top:20px"><div style="height:22px;font-size:11px;color:var(--muted);display:flex;align-items:center">Mon</div><div style="height:22px;font-size:11px;color:var(--muted);display:flex;align-items:center">Tue</div><div style="height:22px;font-size:11px;color:var(--muted);display:flex;align-items:center">Wed</div><div style="height:22px;font-size:11px;color:var(--muted);display:flex;align-items:center">Thu</div><div style="height:22px;font-size:11px;color:var(--muted);display:flex;align-items:center">Fri</div></div>
+<div><div style="display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-bottom:3px;font-size:10px;color:var(--muted);text-align:center"><span>Wk1</span><span>Wk2</span><span>Wk3</span><span>Wk4</span><span>Wk5</span><span>Wk6</span><span>Wk7</span><span>Wk8</span></div>
+<div style="display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(5,22px);gap:3px">
+<div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-5"></div><div class="heatmap-cell heat-5"></div><div class="heatmap-cell heat-4"></div>
+<div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-5"></div>
+<div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-5"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-5"></div><div class="heatmap-cell heat-5"></div>
+<div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-4"></div><div class="heatmap-cell heat-4"></div>
+<div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-1"></div><div class="heatmap-cell heat-0"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-2"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-3"></div><div class="heatmap-cell heat-4"></div>
+</div></div>
+</div>
+<div style="display:flex;gap:10px;align-items:center;margin-top:12px;font-size:11px;color:var(--muted)"><span>Low</span><div style="display:flex;gap:2px"><div class="heatmap-cell heat-0" style="width:14px;height:14px;display:inline-block"></div><div class="heatmap-cell heat-1" style="width:14px;height:14px;display:inline-block"></div><div class="heatmap-cell heat-2" style="width:14px;height:14px;display:inline-block"></div><div class="heatmap-cell heat-3" style="width:14px;height:14px;display:inline-block"></div><div class="heatmap-cell heat-4" style="width:14px;height:14px;display:inline-block"></div><div class="heatmap-cell heat-5" style="width:14px;height:14px;display:inline-block"></div></div><span>High</span><span style="margin-left:auto">&#9650; Escalating pattern weeks 5-8</span></div>
+</div>
+</div>
+
+<!-- C: Tasks -->
+<div id="page-c-tasks" class="page">
+<div class="page-header"><h3>Task Board</h3><p>Manage coordinator workflows and pending actions</p></div>
+<div class="card"><div class="card-header"><span class="card-title">Workflow Board</span><button class="btn btn-primary btn-sm">+ New Task</button></div>
+<div class="kanban">
+<div class="kanban-col"><div class="kanban-col-header"><span style="color:var(--warn)">&#9679;</span> To Do <span class="count">4</span></div>
+<div class="kanban-card"><div class="kanban-card-title">Follow up P-0089 burden alert</div><div class="kanban-card-meta"><span class="badge badge-danger" style="font-size:10px">Urgent</span><span>Due today</span></div></div>
+<div class="kanban-card"><div class="kanban-card-title">Schedule telehealth for 3 participants</div><div class="kanban-card-meta"><span class="badge badge-warning" style="font-size:10px">Medium</span><span>Due Fri</span></div></div>
+<div class="kanban-card"><div class="kanban-card-title">Review consent for P-0249</div><div class="kanban-card-meta"><span class="badge badge-info" style="font-size:10px">Normal</span><span>Due Thu</span></div></div>
+<div class="kanban-card"><div class="kanban-card-title">Upload Q2 DSMB report</div><div class="kanban-card-meta"><span class="badge badge-info" style="font-size:10px">Normal</span><span>Due next wk</span></div></div>
+</div>
+<div class="kanban-col"><div class="kanban-col-header"><span style="color:var(--pri)">&#9679;</span> In Progress <span class="count">3</span></div>
+<div class="kanban-card"><div class="kanban-card-title">Equity outreach — rural sites 14-18</div><div class="kanban-card-meta"><span class="badge badge-purple" style="font-size:10px">Equity</span><span>70%</span></div></div>
+<div class="kanban-card"><div class="kanban-card-title">Onboard Site 19 (Letterkenny)</div><div class="kanban-card-meta"><span class="badge badge-info" style="font-size:10px">Normal</span><span>Training sched.</span></div></div>
+<div class="kanban-card"><div class="kanban-card-title">Adaptive scheduling rollout</div><div class="kanban-card-meta"><span class="badge badge-warning" style="font-size:10px">Medium</span><span>Testing</span></div></div>
+</div>
+<div class="kanban-col"><div class="kanban-col-header"><span style="color:var(--acc)">&#9679;</span> Done <span class="count">3</span></div>
+<div class="kanban-card"><div class="kanban-card-title">Ethics amendment v3.2 submitted</div><div class="kanban-card-meta"><span>Today</span></div></div>
+<div class="kanban-card"><div class="kanban-card-title">Monthly retention report</div><div class="kanban-card-meta"><span>Yesterday</span></div></div>
+<div class="kanban-card"><div class="kanban-card-title">Wearable integration testing</div><div class="kanban-card-meta"><span>2 days ago</span></div></div>
+</div>
+</div></div>
+</div>
+
+<!-- C: Telehealth -->
+<div id="page-c-telehealth" class="page">
+<div class="page-header"><h3>Telehealth & Remote Follow-up</h3><p>Video visits, ePROs, symptom tracking, and retention alerts</p></div>
+<div class="grid grid-4" style="margin-bottom:20px">
+<div class="stat-card"><div class="accent" style="background:var(--pri)"></div><div class="stat-label">Video Visits</div><div class="stat-value">34</div><div class="stat-change">this week</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--acc)"></div><div class="stat-label">ePRO Rate</div><div class="stat-value">87%</div><div class="stat-change up">&#9650; 3%</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--warn)"></div><div class="stat-label">Missed Reports</div><div class="stat-value">12</div><div class="stat-change down">needs follow-up</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--purple)"></div><div class="stat-label">Wearables Active</div><div class="stat-value">156</div><div class="stat-change up">devices syncing</div></div>
+</div>
+<div class="grid grid-2">
+<div class="card">
+<div class="card-header"><span class="card-title">Today's Schedule</span><button class="btn btn-primary btn-sm">+ Schedule</button></div>
+<div class="visit-item"><div class="visit-icon" style="background:var(--pri-light);color:var(--pri)">&#128247;</div><div class="visit-info"><div class="visit-title">P-0042 — Follow-up</div><div class="visit-sub">14:00 • Video call • 15 min</div></div><span class="badge badge-info">Telehealth</span></div>
+<div class="visit-item"><div class="visit-icon" style="background:var(--acc-light);color:var(--acc)">&#127973;</div><div class="visit-info"><div class="visit-title">P-0089 — Blood Draw + Review</div><div class="visit-sub">10:30 tomorrow • In-person • Site 3</div></div><span class="badge badge-neutral">Clinic</span></div>
+<div class="visit-item"><div class="visit-icon" style="background:var(--pri-light);color:var(--pri)">&#128247;</div><div class="visit-info"><div class="visit-title">P-0156 — Symptom Check</div><div class="visit-sub">Thu 16:00 • Video call • 10 min</div></div><span class="badge badge-info">Telehealth</span></div>
+<div class="visit-item"><div class="visit-icon" style="background:var(--purple-light);color:var(--purple)">&#128172;</div><div class="visit-info"><div class="visit-title">P-0201 — Async Check-in</div><div class="visit-sub">Fri • Secure message</div></div><span class="badge badge-purple">Async</span></div>
+</div>
+<div class="card"><div class="card-header"><span class="card-title">ePRO Completion Trend</span></div><div class="chart-box" style="height:220px"><canvas id="ch-epro"></canvas></div></div>
+</div>
+<div class="card" style="margin-top:20px">
+<div class="card-header"><span class="card-title">Retention Alerts</span></div>
+<table><thead><tr><th>Patient</th><th>Issue</th><th>Overdue</th><th>Suggested Action</th><th></th></tr></thead>
+<tbody>
+<tr><td><strong>P-0056</strong></td><td>Missed weekly ePRO ×2</td><td><span style="color:var(--warn)">8 days</span></td><td>Send SMS reminder</td><td><button class="btn btn-outline btn-sm" onclick="showToast('SMS reminder sent to P-0056')">Act</button></td></tr>
+<tr><td><strong>P-0118</strong></td><td>No wearable sync</td><td><span style="color:var(--danger)">14 days</span></td><td>Coordinator call</td><td><button class="btn btn-outline btn-sm">Act</button></td></tr>
+<tr><td><strong>P-0089</strong></td><td>Missed video visit</td><td><span style="color:var(--warn)">5 days</span></td><td>Reschedule + check burden</td><td><button class="btn btn-outline btn-sm">Act</button></td></tr>
+</tbody></table>
+</div>
+</div>
+
+<!-- C: Sites -->
+<div id="page-c-sites" class="page">
+<div class="page-header"><h3>Site Operations</h3><p>Performance monitoring, missing data, and site communications</p></div>
+<div class="grid grid-2">
+<div class="card"><div class="card-header"><span class="card-title">Site Performance — Enrollment vs Target</span></div><div class="chart-box" style="height:240px"><canvas id="ch-sites"></canvas></div></div>
+<div class="card">
+<div class="card-header"><span class="card-title">Missing Data Alerts</span></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div class="alert alert-danger" style="margin:0;padding:10px 14px"><span class="alert-icon" style="font-size:14px">&#9888;</span><div style="font-size:12px"><strong>Site 7</strong> — 4 patients missing Month 3 ePROs (5 days overdue)</div></div>
+<div class="alert alert-warn" style="margin:0;padding:10px 14px"><span class="alert-icon" style="font-size:14px">&#9888;</span><div style="font-size:12px"><strong>Site 12</strong> — Blood samples not logged for 2 participants</div></div>
+<div class="alert alert-warn" style="margin:0;padding:10px 14px"><span class="alert-icon" style="font-size:14px">&#9888;</span><div style="font-size:12px"><strong>Site 3</strong> — Consent form v5 not uploaded for new enrollees</div></div>
+<div class="alert alert-info" style="margin:0;padding:10px 14px"><span class="alert-icon" style="font-size:14px">&#8505;</span><div style="font-size:12px"><strong>Site 1</strong> — Wearable data gap (1 device sync issue)</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============================== -->
+<!-- INVESTIGATOR PAGES             -->
+<!-- ============================== -->
+
+<!-- I: Study Overview -->
+<div id="page-i-overview" class="page">
+<div class="page-header"><h3>Study Overview</h3><p>High-level enrollment, milestones, and progress against protocol targets</p></div>
+<div class="grid grid-5" style="margin-bottom:22px">
+<div class="stat-card"><div class="accent" style="background:var(--pri)"></div><div class="stat-label">Target N</div><div class="stat-value">300</div><div class="stat-change">protocol target</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--acc)"></div><div class="stat-label">Enrolled</div><div class="stat-value">247</div><div class="stat-change up">82% of target</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--sec)"></div><div class="stat-label">Retention</div><div class="stat-value">89%</div><div class="stat-change down">target: 85%</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--warn)"></div><div class="stat-label">Data Completeness</div><div class="stat-value">94%</div><div class="stat-change up">above threshold</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--purple)"></div><div class="stat-label">Equity Score</div><div class="stat-value">72%</div><div class="stat-change up">&#9650; 4%</div></div>
+</div>
+<div class="grid grid-2">
+<div class="card"><div class="card-header"><span class="card-title">Enrollment Progress</span><span class="badge badge-info">vs target</span></div><div class="chart-box" style="height:240px"><canvas id="ch-enroll"></canvas></div></div>
+<div class="card">
+<div class="card-header"><span class="card-title">Study Milestones</span></div>
+<div class="timeline">
+<div class="tl-item done"><div class="tl-dot"></div><div class="tl-time">Mar 2025</div><div class="tl-text"><strong>Ethics approval</strong> — REC approved</div></div>
+<div class="tl-item done"><div class="tl-dot"></div><div class="tl-time">Jun 2025</div><div class="tl-text"><strong>First participant enrolled</strong></div></div>
+<div class="tl-item done"><div class="tl-dot"></div><div class="tl-time">Dec 2025</div><div class="tl-text"><strong>50% enrollment</strong> — 150 participants</div></div>
+<div class="tl-item done"><div class="tl-dot"></div><div class="tl-time">Apr 2026</div><div class="tl-text"><strong>DSMB interim review</strong> — no safety concerns</div></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-time">Jul 2026</div><div class="tl-text"><strong>Enrollment close</strong> — target N=300</div></div>
+<div class="tl-item"><div class="tl-dot"></div><div class="tl-time">Jan 2027</div><div class="tl-text"><strong>Primary endpoint</strong> — 6-month follow-up</div></div>
+</div>
+</div>
+</div>
+<div class="card" style="margin-top:20px">
+<div class="card-header"><span class="card-title">Arm Balance</span></div>
+<div class="grid grid-3" style="gap:12px">
+<div style="padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Intervention</div><div style="font-size:28px;font-weight:700;color:var(--pri);margin:4px 0">124</div><div style="font-size:12px;color:var(--muted)">50.2% • Target: 150</div><div class="progress" style="margin-top:8px"><div class="progress-fill" style="width:82.7%;background:var(--pri)"></div></div></div>
+<div style="padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Control</div><div style="font-size:28px;font-weight:700;color:var(--acc);margin:4px 0">123</div><div style="font-size:12px;color:var(--muted)">49.8% • Target: 150</div><div class="progress" style="margin-top:8px"><div class="progress-fill" style="width:82%;background:var(--acc)"></div></div></div>
+<div style="padding:16px;background:var(--bg);border-radius:10px;text-align:center;border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Withdrawn</div><div style="font-size:28px;font-weight:700;color:var(--muted);margin:4px 0">15</div><div style="font-size:12px;color:var(--muted)">6.1% • Threshold: 10%</div><div class="progress" style="margin-top:8px"><div class="progress-fill" style="width:61%;background:var(--muted)"></div></div></div>
+</div>
+</div>
+</div>
+
+<!-- I: Data Quality -->
+<div id="page-i-data" class="page">
+<div class="page-header"><h3>Data Quality & Completeness</h3><p>Monitor data integrity, completeness rates, and quality metrics across all domains</p></div>
+<div class="grid grid-4" style="margin-bottom:20px">
+<div class="stat-card"><div class="accent" style="background:var(--acc)"></div><div class="stat-label">Overall Quality</div><div class="stat-value">94%</div><div class="stat-change up">&#9650; 2% this month</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--pri)"></div><div class="stat-label">ePRO Complete</div><div class="stat-value">87%</div><div class="stat-change up">above 80% threshold</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--warn)"></div><div class="stat-label">Queries Open</div><div class="stat-value">18</div><div class="stat-change">avg resolution: 3d</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--danger)"></div><div class="stat-label">Protocol Deviations</div><div class="stat-value">7</div><div class="stat-change">3 major, 4 minor</div></div>
+</div>
+<div class="card" style="margin-bottom:20px">
+<div class="card-header"><span class="card-title">Completeness by Data Domain</span></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Demographics & Eligibility</span><strong style="color:var(--acc)">100%</strong></div><div class="progress"><div class="progress-fill" style="width:100%;background:var(--acc)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Informed Consent</span><strong style="color:var(--acc)">98%</strong></div><div class="progress"><div class="progress-fill" style="width:98%;background:var(--acc)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Baseline Questionnaires</span><strong style="color:var(--acc)">96%</strong></div><div class="progress"><div class="progress-fill" style="width:96%;background:var(--acc)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Medication Records</span><strong style="color:var(--pri)">91%</strong></div><div class="progress"><div class="progress-fill" style="width:91%;background:var(--pri)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Follow-up ePROs</span><strong style="color:var(--warn)">87%</strong></div><div class="progress"><div class="progress-fill" style="width:87%;background:var(--warn)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Wearable Data</span><strong style="color:var(--warn)">79%</strong></div><div class="progress"><div class="progress-fill" style="width:79%;background:var(--warn)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Lab Results</span><strong style="color:var(--danger)">72%</strong></div><div class="progress"><div class="progress-fill" style="width:72%;background:var(--danger)"></div></div></div>
+</div>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">Recent Protocol Deviations</span></div>
+<table><thead><tr><th>ID</th><th>Site</th><th>Type</th><th>Description</th><th>Severity</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>DEV-007</td><td>Site 7</td><td>Timing</td><td>Follow-up visit outside ±14 day window</td><td><span class="badge badge-warning">Minor</span></td><td><span class="badge badge-success">Resolved</span></td></tr>
+<tr><td>DEV-006</td><td>Site 3</td><td>Consent</td><td>Participant enrolled on superseded consent version</td><td><span class="badge badge-danger">Major</span></td><td><span class="badge badge-warning">Under review</span></td></tr>
+<tr><td>DEV-005</td><td>Site 12</td><td>Eligibility</td><td>Age criterion not verified at screening</td><td><span class="badge badge-danger">Major</span></td><td><span class="badge badge-success">Resolved</span></td></tr>
+</tbody></table>
+</div>
+</div>
+
+<!-- I: Equity -->
+<div id="page-i-equity" class="page">
+<div class="page-header"><h3>Equity & Inclusion Analytics</h3><p>Monitor representation, identify gaps, and drive equitable participation</p></div>
+<div class="grid grid-3" style="margin-bottom:20px">
+<div class="card"><div class="equity-score"><div class="equity-ring"><div class="equity-ring-inner">72</div></div><div><div style="font-size:16px;font-weight:700;color:var(--purple)">Equity Score</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Composite: demographics, geography, language, digital access</div><div style="margin-top:8px"><span class="badge badge-purple">&#9650; 4% this quarter</span></div></div></div></div>
+<div class="stat-card"><div class="accent" style="background:var(--purple)"></div><div class="stat-label">Languages Supported</div><div class="stat-value">6</div><div class="stat-change up">EN, GA, PL, RO, AR, UR</div></div>
+<div class="stat-card"><div class="accent" style="background:var(--acc)"></div><div class="stat-label">Rural Enrollment</div><div class="stat-value">28%</div><div class="stat-change up">&#9650; 12% vs baseline</div></div>
+</div>
+<div class="grid grid-2">
+<div class="card"><div class="card-header"><span class="card-title">Age Distribution vs Target</span></div><div class="chart-box" style="height:230px"><canvas id="ch-age"></canvas></div></div>
+<div class="card"><div class="card-header"><span class="card-title">Geographic Representation</span></div><div class="chart-box" style="height:230px"><canvas id="ch-geo"></canvas></div></div>
+</div>
+<div class="card" style="margin-top:20px">
+<div class="card-header"><span class="card-title">Equity Gap Alerts</span></div>
+<div class="grid grid-2" style="gap:10px">
+<div class="rec-card"><div class="rec-icon" style="background:var(--danger-light);color:var(--danger)">&#9888;</div><div class="rec-content"><div class="rec-title">Under-represented: Rural older adults (75+)</div><div class="rec-desc">Current 8% vs target 15%. Recommend: phone-based pathway, GP-mediated outreach.</div></div></div>
+<div class="rec-card"><div class="rec-icon" style="background:var(--warn-light);color:var(--warn)">&#9888;</div><div class="rec-content"><div class="rec-title">Digital access gap: Sites 14-16</div><div class="rec-desc">22% lack reliable internet. Recommend: SMS-based ePROs, paper backup.</div></div></div>
+<div class="rec-card"><div class="rec-icon" style="background:var(--acc-light);color:var(--acc)">&#10003;</div><div class="rec-content"><div class="rec-title">Gender balance achieved</div><div class="rec-desc">52% female, 47% male, 1% other — within 5% of census.</div></div></div>
+<div class="rec-card"><div class="rec-icon" style="background:var(--pri-light);color:var(--pri)">&#8505;</div><div class="rec-content"><div class="rec-title">Language access improving</div><div class="rec-desc">Multi-language consent live. 12 new non-English enrolments this month.</div></div></div>
+</div>
+</div>
+</div>
+
+<!-- I: Retention -->
+<div id="page-i-retention" class="page">
+<div class="page-header"><h3>Retention & Burden Analysis</h3><p>Aggregate burden analytics, retention predictors, and dropout analysis</p></div>
+<div class="grid grid-2" style="margin-bottom:20px">
+<div class="card"><div class="card-header"><span class="card-title">Retention Curve — Kaplan-Meier</span></div><div class="chart-box" style="height:250px"><canvas id="ch-km"></canvas></div></div>
+<div class="card"><div class="card-header"><span class="card-title">Burden Distribution — All Participants</span></div><div class="chart-box" style="height:250px"><canvas id="ch-burdendist"></canvas></div></div>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">Dropout Risk Predictors</span></div>
+<div class="grid grid-3" style="gap:12px">
+<div style="padding:16px;background:var(--danger-light);border-radius:10px;border:1px solid rgba(239,68,68,0.15)"><div style="font-size:12px;font-weight:600;color:#991B1B;margin-bottom:4px">High Burden Score (&gt;60)</div><div style="font-size:11px;color:#991B1B">3.2x more likely to withdraw. Currently 14 participants above threshold.</div></div>
+<div style="padding:16px;background:var(--warn-light);border-radius:10px;border:1px solid rgba(245,158,11,0.15)"><div style="font-size:12px;font-weight:600;color:#92400E;margin-bottom:4px">Travel Time &gt;30 min</div><div style="font-size:11px;color:#92400E">2.1x dropout risk. 38 participants affected. Telehealth reduces to 1.2x.</div></div>
+<div style="padding:16px;background:var(--purple-light);border-radius:10px;border:1px solid rgba(139,92,246,0.15)"><div style="font-size:12px;font-weight:600;color:#5B21B6;margin-bottom:4px">Digital Access Barriers</div><div style="font-size:11px;color:#5B21B6">1.8x risk for limited internet. SMS ePRO pathway mitigates.</div></div>
+</div>
+</div>
+</div>
+
+<!-- I: Reports -->
+<div id="page-i-reports" class="page">
+<div class="page-header"><h3>Reports & Documents</h3><p>DSMB reports, interim analyses, protocol documents, and regulatory filings</p></div>
+<div class="card">
+<div class="card-header"><span class="card-title">Study Documents</span><button class="btn btn-primary btn-sm">+ Upload</button></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="survey-item"><div class="survey-icon" style="background:#dcfce7;color:#16a34a">&#128200;</div><div class="survey-info"><div class="survey-name">DSMB Report — Q1 2026</div><div class="survey-meta">Filed 22 Apr 2026 • No safety concerns • 1.1 MB</div></div><span class="badge badge-success">Filed</span></div>
+<div class="survey-item"><div class="survey-icon" style="background:#fef3c7;color:#d97706">&#9878;</div><div class="survey-info"><div class="survey-name">Ethics Amendment v3.2</div><div class="survey-meta">Approved 16 May 2026 • REC ref: 2026/ETH/042</div></div><span class="badge badge-success">Approved</span></div>
+<div class="survey-item"><div class="survey-icon" style="background:#dbeafe;color:#2563eb">&#9998;</div><div class="survey-info"><div class="survey-name">Protocol Amendment #4</div><div class="survey-meta">Submitted 14 May 2026 • Under REC review</div></div><span class="badge badge-warning">Under Review</span></div>
+<div class="survey-item"><div class="survey-icon" style="background:#f3e8ff;color:#7c3aed">&#128221;</div><div class="survey-info"><div class="survey-name">Statistical Analysis Plan v2.1</div><div class="survey-meta">Finalised 10 Apr 2026 • Locked</div></div><span class="badge badge-info">Locked</span></div>
+<div class="survey-item"><div class="survey-icon" style="background:#dbeafe;color:#2563eb">&#9998;</div><div class="survey-info"><div class="survey-name">Study Protocol v6.1</div><div class="survey-meta">Current version • Last updated 2 May 2026</div></div><span class="badge badge-success">Active</span></div>
+</div>
+</div>
+</div>
+
+<!-- ============================== -->
+<!-- PARTICIPANT PAGES              -->
+<!-- ============================== -->
+
+<!-- P: Dashboard -->
+<div id="page-p-dashboard" class="page">
+<div class="welcome-banner">
+<h3>Welcome back, Margaret</h3>
+<p>You're making great progress in the MIDAS study. Here's your overview.</p>
+<div style="margin-top:16px;display:flex;gap:10px">
+<button class="btn" style="background:rgba(255,255,255,0.15);color:#fff;backdrop-filter:blur(4px)" onclick="navigateTo('p-surveys')">&#128221; Complete Survey</button>
+<button class="btn" style="background:rgba(255,255,255,0.15);color:#fff" onclick="navigateTo('p-appointments')">&#128247; My Appointments</button>
+</div>
+</div>
+<div class="card" style="margin-bottom:20px">
+<div class="card-header"><span class="card-title">Your Progress</span><span class="badge badge-success">On Track</span></div>
+<div class="journey">
+<div class="journey-step done"><div class="journey-dot">&#10003;</div><div class="journey-step-label">Screening</div><div class="journey-step-sub">Completed</div></div>
+<div class="journey-step done"><div class="journey-dot">&#10003;</div><div class="journey-step-label">Consent</div><div class="journey-step-sub">Signed 12 Jan</div></div>
+<div class="journey-step done"><div class="journey-dot">&#10003;</div><div class="journey-step-label">Baseline</div><div class="journey-step-sub">All done</div></div>
+<div class="journey-step current"><div class="journey-dot">4</div><div class="journey-step-label">Month 3</div><div class="journey-step-sub">In progress</div></div>
+<div class="journey-step"><div class="journey-dot">5</div><div class="journey-step-label">Month 6</div><div class="journey-step-sub">Aug 2026</div></div>
+<div class="journey-step"><div class="journey-dot">6</div><div class="journey-step-label">Complete</div><div class="journey-step-sub">Nov 2026</div></div>
+</div>
+</div>
+<div class="grid grid-2">
+<div class="card">
+<div class="card-header"><span class="card-title">Your Participation Load</span></div>
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+<div style="width:56px;height:56px;border-radius:50%;background:var(--acc-light);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--acc)">28</div>
+<div><div style="font-size:15px;font-weight:600;color:var(--acc)">Low Burden</div><div style="font-size:12px;color:var(--muted)">Your participation load is very manageable</div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Appointments this month</span><strong>1 visit</strong></div><div class="progress"><div class="progress-fill" style="width:20%;background:var(--acc)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Surveys completed</span><strong>1 of 2</strong></div><div class="progress"><div class="progress-fill" style="width:50%;background:var(--pri)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Overall progress</span><strong>72%</strong></div><div class="progress"><div class="progress-fill" style="width:72%;background:var(--acc)"></div></div></div>
+</div>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">Upcoming</span></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="padding:14px;background:var(--pri-light);border-radius:10px;border-left:4px solid var(--pri)"><div style="font-weight:600;font-size:13px">&#128221; Complete monthly survey</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Due in 3 days • ~8 minutes</div><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="navigateTo('p-surveys')">Start Survey</button></div>
+<div style="padding:14px;background:var(--bg);border-radius:10px;border-left:4px solid var(--sec)"><div style="font-weight:600;font-size:13px">&#128247; Video call with coordinator</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Thursday, 15:00 • 15 minutes</div></div>
+<div style="padding:14px;background:var(--bg);border-radius:10px;border-left:4px solid var(--border)"><div style="font-weight:600;font-size:13px">&#127973; Month 6 clinic visit</div><div style="font-size:12px;color:var(--muted);margin-top:3px">28 Aug 2026 • ~45 minutes at clinic</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- P: Surveys -->
+<div id="page-p-surveys" class="page">
+<div class="page-header"><h3>My Surveys</h3><p>Complete your questionnaires and view past submissions</p></div>
+<div class="alert alert-info"><span class="alert-icon">&#128221;</span><div><strong>1 survey due</strong> — Your monthly health questionnaire is due in 3 days. It takes about 8 minutes to complete.</div></div>
+<div class="card" style="margin-bottom:20px">
+<div class="card-header"><span class="card-title">Available Surveys</span></div>
+<div class="survey-item" style="border-color:var(--pri);background:var(--pri-light)"><div class="survey-icon" style="background:var(--pri);color:#fff">&#128221;</div><div class="survey-info"><div class="survey-name">Monthly Health Questionnaire</div><div class="survey-meta">Due 20 May 2026 • ~8 min • EQ-5D, self-rated health, GP visits</div></div><button class="btn btn-primary btn-sm" onclick="showToast('Survey opened — demo mode')">Start</button></div>
+</div>
+<div class="card">
+<div class="card-header"><span class="card-title">Past Submissions</span></div>
+<table><thead><tr><th>Survey</th><th>Submitted</th><th>Duration</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Monthly Health Questionnaire</td><td>18 Apr 2026</td><td>7 min</td><td><span class="badge badge-success">Complete</span></td></tr>
+<tr><td>Monthly Health Questionnaire</td><td>20 Mar 2026</td><td>9 min</td><td><span class="badge badge-success">Complete</span></td></tr>
+<tr><td>Baseline Questionnaire</td><td>22 Jan 2026</td><td>14 min</td><td><span class="badge badge-success">Complete</span></td></tr>
+</tbody></table>
+</div>
+</div>
+
+<!-- P: Health Feedback -->
+<div id="page-p-health" class="page">
+<div class="page-header"><h3>My Health Feedback</h3><p>Personalised insights from your survey responses</p></div>
+<div class="grid grid-2">
+<div>
+<div class="feedback-card">
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><div style="width:56px;height:56px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">72</div><div><strong style="font-size:15px">Your Health Today</strong><br><span style="font-size:12px;color:var(--muted)">EQ-5D VAS — Good range</span></div></div>
+<div style="font-size:13px;line-height:1.7">Your score of 72/100 is <strong>above the study average</strong> (67) and improved 4 points since last assessment.</div>
+<div style="background:#fff;border-left:3px solid var(--acc);padding:10px 12px;margin-top:10px;border-radius:0 8px 8px 0;font-size:12px;color:var(--muted)"><strong>Tip:</strong> Scores above 70 indicate you are feeling reasonably well.</div>
+</div>
+<div class="feedback-card">
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><div style="width:56px;height:56px;border-radius:50%;background:var(--warn);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">3</div><div><strong style="font-size:15px">Anxiety &amp; Mood</strong><br><span style="font-size:12px;color:var(--muted)">EQ-5D — Moderate</span></div></div>
+<div style="font-size:13px;line-height:1.7">You reported <strong>moderate</strong> anxiety. ~35% of participants report similar levels.</div>
+<div style="background:#fff;border-left:3px solid var(--warn);padding:10px 12px;margin-top:10px;border-radius:0 8px 8px 0;font-size:12px;color:var(--muted)"><strong>Consider:</strong> If affecting daily life, your GP can help.</div>
+</div>
+</div>
+<div>
+<div class="card" style="margin-bottom:16px"><div class="card-title" style="margin-bottom:12px">Your Scores Over Time</div><div class="chart-box" style="height:190px"><canvas id="ch-ptrend"></canvas></div></div>
+<div class="card"><div class="card-title" style="margin-bottom:12px">How You Compare</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Mobility</span><span style="color:var(--acc)">78th percentile</span></div><div class="progress"><div class="progress-fill" style="width:78%;background:var(--acc)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Self-care</span><span style="color:var(--acc)">85th percentile</span></div><div class="progress"><div class="progress-fill" style="width:85%;background:var(--acc)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Activities</span><span style="color:var(--warn)">52nd percentile</span></div><div class="progress"><div class="progress-fill" style="width:52%;background:var(--warn)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Pain</span><span style="color:var(--warn)">48th percentile</span></div><div class="progress"><div class="progress-fill" style="width:48%;background:var(--warn)"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Anxiety</span><span style="color:var(--danger)">32nd percentile</span></div><div class="progress"><div class="progress-fill" style="width:32%;background:var(--danger)"></div></div></div>
+</div></div>
+</div>
+</div>
+</div>
+
+<!-- P: Appointments -->
+<div id="page-p-appointments" class="page">
+<div class="page-header"><h3>My Appointments</h3><p>View and manage your study visits</p></div>
+<div class="card" style="margin-bottom:16px">
+<div class="card-header"><span class="card-title">Upcoming</span></div>
+<div class="visit-item" style="border-left:4px solid var(--pri)"><div class="visit-icon" style="background:var(--pri-light);color:var(--pri)">&#128247;</div><div class="visit-info"><div class="visit-title">Video call with Sarah</div><div class="visit-sub">Thu 22 May, 15:00 - 15 min - From home</div></div><button class="btn btn-primary btn-sm">Join</button></div>
+<div class="visit-item"><div class="visit-icon" style="background:var(--acc-light);color:var(--acc)">&#127973;</div><div class="visit-info"><div class="visit-title">Month 6 clinic visit</div><div class="visit-sub">28 Aug 2026 - ~45 min - Main Street Clinic</div></div><button class="btn btn-outline btn-sm">Details</button></div>
+</div>
+<div class="card"><div class="card-header"><span class="card-title">Past Visits</span></div>
+<table><thead><tr><th>Date</th><th>Type</th><th>With</th><th>Notes</th></tr></thead>
+<tbody><tr><td>18 Apr</td><td><span class="badge badge-info">Video</span></td><td>Sarah Mitchell</td><td>Routine check-in</td></tr>
+<tr><td>22 Jan</td><td><span class="badge badge-neutral">Clinic</span></td><td>Dr. Murphy</td><td>Baseline assessment</td></tr>
+</tbody></table></div>
+</div>
+
+<!-- P: Messages -->
+<div id="page-p-messages" class="page">
+<div class="page-header"><h3>Messages</h3><p>Secure messaging with your coordinator</p></div>
+<div class="card">
+<div class="card-header"><span class="card-title">Sarah Mitchell</span><span class="badge badge-success">Online</span></div>
+<div class="msg-thread">
+<div class="msg msg-in"><div>Hi Margaret! Monthly survey due on the 20th (~8 min).</div><div class="msg-meta">Sarah - 9:15 AM</div></div>
+<div class="msg msg-out"><div>Thanks! I will do it tomorrow. Same as last month?</div><div class="msg-meta">You - 10:02 AM</div></div>
+<div class="msg msg-in"><div>Yes same format. Your scores showed good improvement!</div><div class="msg-meta">Sarah - 10:08 AM</div></div>
+<div class="msg msg-out"><div>Can my next visit be video? The drive is long.</div><div class="msg-meta">You - 10:15 AM</div></div>
+<div class="msg msg-in"><div>Absolutely! Only Month 6 needs to be in-person for bloods. I will switch the rest to video.</div><div class="msg-meta">Sarah - 10:22 AM</div></div>
+</div>
+<div class="msg-input-row"><input type="text" placeholder="Type a message..." id="msg-input"><button class="btn btn-primary" onclick="sendMsg()">Send</button></div>
+</div>
+</div>
+
+<!-- P: Study Info -->
+<div id="page-p-study" class="page">
+<div class="page-header"><h3>About This Study</h3><p>MIDAS trial information</p></div>
+<div class="card" style="margin-bottom:16px">
+<div style="font-size:15px;font-weight:700;margin-bottom:10px">MIDAS - Prescribing Management in Multimorbidity</div>
+<div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px">Looking at improving medicine management for people taking multiple medications. You were invited because you take 5+ regular medicines.</div>
+<div class="grid grid-3" style="gap:10px;margin-bottom:16px">
+<div style="padding:12px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:11px;color:var(--muted)">Duration</div><div style="font-size:18px;font-weight:700">6 months</div></div>
+<div style="padding:12px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:11px;color:var(--muted)">Visits</div><div style="font-size:18px;font-weight:700">3 total</div></div>
+<div style="padding:12px;background:var(--bg);border-radius:8px;text-align:center"><div style="font-size:11px;color:var(--muted)">Surveys</div><div style="font-size:18px;font-weight:700">4 total</div></div>
+</div>
+<div class="survey-item"><div class="survey-icon" style="background:#f3e8ff;color:#7c3aed">&#128221;</div><div class="survey-info"><div class="survey-name">Signed Consent Form</div><div class="survey-meta">Signed 12 Jan 2026 - Version 5</div></div><span class="badge badge-success">Active</span></div>
+</div>
+<div class="card">
+<div style="font-size:14px;font-weight:600;margin-bottom:10px">FAQ</div>
+<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:600;color:var(--pri);margin-bottom:3px">Can I withdraw?</div><div style="font-size:12px;color:var(--muted)">Yes, anytime. Won't affect your care.</div></div>
+<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:600;color:var(--pri);margin-bottom:3px">Who sees my data?</div><div style="font-size:12px;color:var(--muted)">Only the research team. All anonymised.</div></div>
+<div><div style="font-size:13px;font-weight:600;color:var(--pri);margin-bottom:3px">Can I do video visits?</div><div style="font-size:12px;color:var(--muted)">Most follow-ups yes. Only blood tests need clinic.</div></div>
+</div>
+</div>
+
+</div></div></div>
+<div class="toast" id="toast"><span>&#10003;</span><span id="toast-msg"></span></div>
+<script>
+const ROLES={coordinator:{name:'Sarah Mitchell',title:'Trial Coordinator',avatar:'SM',color:'#0891B2',nav:[{group:'Overview',items:[{id:'c-dashboard',label:'Dashboard',icon:'&#9632;'}]},{group:'Recruitment',items:[{id:'c-participants',label:'Participants',icon:'&#9823;'}]},{group:'Participation',items:[{id:'c-burden',label:'Burden Engine',icon:'&#9878;',badge:'3'},{id:'c-telehealth',label:'Telehealth',icon:'&#9741;'}]},{group:'Operations',items:[{id:'c-tasks',label:'Task Board',icon:'&#9881;'},{id:'c-sites',label:'Site Ops',icon:'&#127969;'}]}],defaultPage:'c-dashboard',pageTitle:'Operations Dashboard'},investigator:{name:'Dr. Farah Arna',title:'Principal Investigator',avatar:'FA',color:'#8B5CF6',nav:[{group:'Overview',items:[{id:'i-overview',label:'Study Overview',icon:'&#9632;'}]},{group:'Analysis',items:[{id:'i-data',label:'Data Quality',icon:'&#128202;'},{id:'i-equity',label:'Equity Analytics',icon:'&#9878;'},{id:'i-retention',label:'Retention & Burden',icon:'&#128200;'}]},{group:'Documents',items:[{id:'i-reports',label:'Reports',icon:'&#128196;'}]}],defaultPage:'i-overview',pageTitle:'Study Overview'},participant:{name:"Margaret O'Brien",title:'Participant P-0042',avatar:'MO',color:'#10B981',nav:[{group:'Home',items:[{id:'p-dashboard',label:'My Dashboard',icon:'&#9632;'}]},{group:'Participation',items:[{id:'p-surveys',label:'My Surveys',icon:'&#128221;',badge:'1'},{id:'p-health',label:'My Health',icon:'&#9829;'},{id:'p-appointments',label:'Appointments',icon:'&#128197;'}]},{group:'Support',items:[{id:'p-messages',label:'Messages',icon:'&#128172;'},{id:'p-study',label:'Study Info',icon:'&#128196;'}]}],defaultPage:'p-dashboard',pageTitle:'My Dashboard'}};
+let currentRole=null,chartsInit={};
+const PT={'c-dashboard':'Operations Dashboard','c-participants':'Participant Management','c-burden':'Burden-Aware Engine','c-tasks':'Task Board','c-telehealth':'Telehealth & Remote','c-sites':'Site Operations','i-overview':'Study Overview','i-data':'Data Quality','i-equity':'Equity & Inclusion','i-retention':'Retention & Burden','i-reports':'Reports','p-dashboard':'My Dashboard','p-surveys':'My Surveys','p-health':'My Health Feedback','p-appointments':'Appointments','p-messages':'Messages','p-study':'Study Info'};
+function switchRole(r){currentRole=r;const c=ROLES[r];document.querySelectorAll('.role-btn').forEach(b=>b.classList.toggle('active',b.dataset.role===r));document.getElementById('user-avatar').textContent=c.avatar;document.getElementById('user-avatar').style.background='linear-gradient(135deg,'+c.color+','+c.color+'cc)';document.getElementById('user-name').textContent=c.name;document.getElementById('user-role').textContent=c.title;const nav=document.getElementById('sidebar-nav');let h='';c.nav.forEach(g=>{h+='<div class="nav-group"><div class="nav-group-label">'+g.group+'</div>';g.items.forEach(item=>{h+='<div class="nav-item'+(item.id===c.defaultPage?' active':'')+'" data-page="'+item.id+'" onclick="navigateTo(\''+item.id+'\',this)"><span class="nav-icon">'+item.icon+'</span><span>'+item.label+'</span>'+(item.badge?'<span class="nav-badge">'+item.badge+'</span>':'')+'</div>'});h+='</div>'});nav.innerHTML=h;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+c.defaultPage).classList.add('active');document.getElementById('page-title').textContent=c.pageTitle;setTimeout(()=>initCharts(r),60)}
+function navigateTo(id,el){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+id).classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));if(el)el.classList.add('active');else{const t=document.querySelector('[data-page="'+id+'"]');if(t)t.classList.add('active')}document.getElementById('page-title').textContent=PT[id]||id;setTimeout(()=>initCharts(currentRole),60)}
+function showToast(m){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+function sendMsg(){const i=document.getElementById('msg-input');if(!i.value.trim())return;const t=document.querySelector('.msg-thread'),d=document.createElement('div');d.className='msg msg-out';d.innerHTML='<div>'+i.value+'</div><div class="msg-meta">You - Just now</div>';t.appendChild(d);i.value='';t.scrollTop=t.scrollHeight;setTimeout(()=>{const r=document.createElement('div');r.className='msg msg-in';r.innerHTML="<div>Thanks! I will get back to you shortly.</div><div class=\"msg-meta\">Sarah - Just now</div>";t.appendChild(r);t.scrollTop=t.scrollHeight},1500)}
+Chart.defaults.font={family:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",size:11};Chart.defaults.color='#64748B';const G='#F1F5F9';
+function initCharts(r){
+if(r==='coordinator'&&!chartsInit.c){chartsInit.c=1;
+new Chart(document.getElementById('ch-funnel'),{type:'bar',data:{labels:['Identified','Outreach','Responded','Eligible','Consented','Enrolled'],datasets:[{data:[1842,1326,698,412,312,247],backgroundColor:['#0891B2','#06B6D4','#22D3EE','#10B981','#059669','#0B1A2E'],borderRadius:6,barThickness:24}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:G}},y:{grid:{display:false}}}}});
+new Chart(document.getElementById('ch-retention'),{type:'line',data:{labels:['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May'],datasets:[{label:'Retention',data:[96,95,94,93,92,91,91,90,90,89,89,89],borderColor:'#0891B2',backgroundColor:'rgba(8,145,178,0.06)',fill:true,tension:0.4,pointRadius:3},{label:'Target',data:[95,95,95,95,95,95,95,95,95,95,95,95],borderColor:'#E2E8F0',borderDash:[4,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12}}},scales:{y:{min:80,max:100,grid:{color:G}},x:{grid:{display:false}}}}});
+new Chart(document.getElementById('ch-epro'),{type:'line',data:{labels:['Wk1','Wk2','Wk3','Wk4','Wk5','Wk6','Wk7','Wk8'],datasets:[{label:'Completion',data:[92,90,88,85,87,89,86,87],borderColor:'#0891B2',backgroundColor:'rgba(8,145,178,0.08)',fill:true,tension:0.3,pointRadius:4},{label:'Threshold',data:[80,80,80,80,80,80,80,80],borderColor:'#EF4444',borderDash:[4,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12}}},scales:{y:{min:70,max:100,grid:{color:G}},x:{grid:{display:false}}}}});
+new Chart(document.getElementById('ch-sites'),{type:'bar',data:{labels:['Site 1','Site 3','Site 7','Site 9','Site 12','Site 14'],datasets:[{label:'Enrolled',data:[22,18,28,15,24,12],backgroundColor:'#0891B2',borderRadius:4},{label:'Target',data:[25,20,30,20,25,20],backgroundColor:'#E2E8F0',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12}}},scales:{y:{grid:{color:G}},x:{grid:{display:false}}}}});}
+if(r==='investigator'&&!chartsInit.i){chartsInit.i=1;
+new Chart(document.getElementById('ch-enroll'),{type:'line',data:{labels:['Jun','Aug','Oct','Dec','Feb','Apr','Jun*','Aug*'],datasets:[{label:'Actual',data:[12,48,95,150,198,247,null,null],borderColor:'#0891B2',backgroundColor:'rgba(8,145,178,0.08)',fill:true,tension:0.3,pointRadius:4,spanGaps:false},{label:'Projected',data:[null,null,null,null,null,247,278,300],borderColor:'#0891B2',borderDash:[6,3],pointRadius:3,fill:false},{label:'Target',data:[38,75,113,150,188,225,263,300],borderColor:'#E2E8F0',borderDash:[4,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12}}},scales:{y:{min:0,max:320,grid:{color:G}},x:{grid:{display:false}}}}});
+new Chart(document.getElementById('ch-age'),{type:'bar',data:{labels:['18-34','35-44','45-54','55-64','65-74','75+'],datasets:[{label:'Enrolled',data:[8,12,18,28,22,12],backgroundColor:'#8B5CF6',borderRadius:4},{label:'Target',data:[12,14,18,24,20,12],backgroundColor:'#EDE9FE',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12}}},scales:{y:{grid:{color:G}},x:{grid:{display:false}}}}});
+new Chart(document.getElementById('ch-geo'),{type:'bar',data:{labels:['Urban','Suburban','Town','Rural'],datasets:[{label:'Current',data:[42,24,18,16],backgroundColor:'#06B6D4',borderRadius:4},{label:'Target',data:[35,25,20,20],backgroundColor:'#ECFEFF',borderColor:'#06B6D4',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12}}},scales:{y:{grid:{color:G}},x:{grid:{display:false}}}}});
+new Chart(document.getElementById('ch-km'),{type:'line',data:{labels:['0','1','2','3','4','5','6','7','8','9','10','11','12'],datasets:[{label:'Intervention',data:[100,98,97,96,95,94,93,92,91,90,90,89,89],borderColor:'#0891B2',tension:0.2,pointRadius:2,fill:false},{label:'Control',data:[100,99,97,96,94,93,92,91,90,89,88,88,87],borderColor:'#10B981',tension:0.2,pointRadius:2,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12}}},scales:{y:{min:80,max:102,grid:{color:G}},x:{grid:{display:false}}}}});
+new Chart(document.getElementById('ch-burdendist'),{type:'bar',data:{labels:['0-20','21-40','41-60','61-80','81-100'],datasets:[{data:[89,100,44,11,3],backgroundColor:['#10B981','#10B981','#F59E0B','#EF4444','#EF4444'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:G}},x:{grid:{display:false}}}}});}
+if(r==='participant'&&!chartsInit.p){chartsInit.p=1;
+new Chart(document.getElementById('ch-ptrend'),{type:'line',data:{labels:['Baseline','Mo 1','Mo 2','Mo 3'],datasets:[{label:'Your Score',data:[65,68,70,72],borderColor:'#0891B2',backgroundColor:'rgba(8,145,178,0.1)',fill:true,tension:0.3,pointRadius:5,pointBackgroundColor:'#0891B2'},{label:'Average',data:[67,67,68,67],borderColor:'#E2E8F0',borderDash:[4,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:10}}},scales:{y:{min:55,max:85,grid:{color:G}},x:{grid:{display:false}}}}});}
+}
+switchRole('coordinator');
+</script>
+</body>
+</html>
